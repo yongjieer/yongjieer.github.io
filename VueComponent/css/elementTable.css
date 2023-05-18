@@ -1,0 +1,53 @@
+.el-table .el-tooltip {
+    line-height: initial;
+}
+
+.el-table__body tr:hover>td {
+    background-color: #c6cfdf !important;
+}
+
+.el-table__body tr.current-row>td {
+    background-color: #d3dee8 !important;
+}
+
+.el-table td,
+.el-table th.is-leaf,
+.el-table--border,
+.el-table--group {
+    border-color: #cfcccc;
+    color: #181212;
+}
+
+.el-table--border::after,
+.el-table--group::after,
+.el-table::before {
+    background-color: #cfcccc;
+}
+
+.el-table__empty-text {
+    line-height: 60px;
+    width: 50%;
+    color: #909399;
+    text-align: initial;
+}
+
+
+.el-table thead th {
+    background-color: #e3e3e3a6;
+}
+
+.el-tabs__header {
+    position: relative;
+    padding: 0px;
+    margin: 0px 0px 0px;
+}
+
+.el-tabs__nav-scroll {
+    height: 35px
+}
+/* .el-scrollbar__bar{
+    display:none;
+} */
+.el-message{
+    top:1px !important;
+}

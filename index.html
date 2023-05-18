@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<!-- <script src="./vue.js"></script>
+		<link rel="stylesheet" href="./index.css">
+		<link rel="stylesheet" href="./elementTable.css">
+		<script src="./index.js"></script> -->
+		<script src="./VueComponent/export2Excel.js"></script>
+		<script src="./VueComponent/VueComponent.js"></script>
+		<link rel="shortcut icon" href="./VueComponent/image/xing1.png" type=image/x-icon>
+	</head>
+	<body>
+		<div id="app">
+			<el-input type="textarea" :rows="2" :autosize="{ minRows: 3, maxRows: 6}" placeholder="请输入内容" v-model="jsondata">
+			</el-input>
+			<el-button type="primary" @click='formatData' :disabled='!jsondata'>解析</el-button>
+			<el-button type="primary" @click='exportData' :disabled='tableData.length==0'>导出</el-button>
+			<el-table id='stable' :height='TableMaxHeight'  highlight-current-row  border :data="tableData">
+				<el-table-column v-for="(item,index) in TableColumns" :align="item.align" :width="item.width" :label="item.label"
+				 :prop="item.prop">
+					<template v-if="item.columntype&&item.columntype=='image'" scope="scope">
+						<img :src="scope.row[item.prop]" style="height: 70px;width: 70px;" />
+					</template>
+					<template v-else-if="item.columntype&&item.columntype=='url'" scope="scope">
+						 <el-link @click='openUrl(scope.row[item.prop])' :underline="false" type="primary" >{{scope.row[item.prop]}}</el-link>
+					</template>
+					<template v-else scope="scope">
+						<span> {{scope.row[item.prop]}}</span>
+					</template>
+
+				</el-table-column>
+			</el-table>
+			
+		</div>
+	</body>
+	<script>
+		
+		// 注册一个全局自定义指令 v-focus
+		Vue.directive('focus', {
+			// 当绑定元素插入到 DOM 中。
+			inserted: function(el) {
+				// 聚焦元素
+				el.focus()
+			}
+		})
+		var vue = new Vue({
+				el: '#app',
+				data: {
+					tableData: [],
+					jsondata: '',
+					TableColumns: [
+						{
+								label: '商品',
+								width: 350,
+								prop: 'image',
+								align: "center",
+								columntype: 'image'
+						},
+						{
+								label: '链接',
+								width: 350,
+								prop: 'url',
+								align: "center",
+								columntype: 'url'
+						},
+						{
+							label: '标题',
+							width: 300,
+							prop: 'title',
+							align: "center"
+						},
+						{
+							label: '品牌',
+							width: 150,
+							prop: 'brand',
+							align: "center"
+						},
+						{
+							label: '店铺名',
+							width: 150,
+							prop: 'shop',
+							align: "center"
+						},
+						{
+							label: '价格',
+							width: 150,
+							prop: 'price',
+							align: "center"
+						}
+					],
+				},
+				watch: {},
+				computed: {
+					TableMaxHeight() {
+					                return document.documentElement.clientHeight - 230;
+					            },
+				},
+				methods: {
+					exportData(){
+						console.log(this.tableData)
+						//this.jsonToExcel(this.tableData,"链接,标题,品牌,店铺名,价格",'aaa');
+						console.log(this.tableData)
+						export2Excel(["商品","链接","标题","品牌","店铺名","价格"], this.tableData, Date.parse(Date()))
+						
+					},
+					jsonToExcel(data, head, name = '导出的文件名') {
+						let str = head ? head + '\n' : '';
+						data.forEach(item => {
+							// 拼接json数据, 增加 \t 为了不让表格显示科学计数法或者其他格式
+							delete item.image;
+							for (let key in item) {
+								let itemVal = item[key];
+								console.log(itemVal)
+								itemVal = itemVal.replaceAll(',',"，")
+								console.log(itemVal)
+								str = `${str + itemVal + '\t'},`
+							}
+							str += '\n'
+						});
+						// encodeURIComponent解决中文乱码
+						const uri = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(str);
+						// 通过创建a标签实现
+						const link = document.createElement("a");
+						link.href = uri;
+						// 对下载的文件命名
+						link.download = `${name + '.csv'}`;
+						link.click();
+					},
+					openUrl(url){
+						window.open(url);
+					},
+					formatData() {
+						
+						try{
+							let tableJson = [];
+							this.tableData = [];
+							let productData = JSON.parse(this.jsondata);
+							console.log(productData)
+							let productList;
+							for(let productkey in productData.data){
+								productList = productData.data[productkey];
+								break;
+							}
+							//= productData.data.productList;
+							let data = productList.data;
+							for (let item of data) {
+								//console.log(item);
+								let product = item.product;
+								let id =product.id;
+								let shop = product.shop;
+								let header_image = product.header_image;
+								let talent = shop.talent;
+								let nickname = talent.nickname;
+								/*let jsitem = {};
+								jsitem.image = header_image.path;
+								jsitem.url = `https://console.youshu.youcloud.com/goods/${id}/overview`;
+								jsitem.title = product.title;
+								jsitem.brand = "";
+								jsitem.shop = shop.name;
+								jsitem.price = product.price.replaceAll(',','');
+								tableJson.push(jsitem);*/
+								tableJson.push({
+									"image": header_image.path,
+									"url":`https://console.youshu.youcloud.com/goods/${id}/overview`,
+									"title": product.title,
+									"brand": "",
+									"shop": shop.name,
+									"price": product.price//.replaceAll(',','')
+								})
+							}
+							this.tableData = tableJson;
+						}catch{
+							this.$message.error("json格式不符合,解析失败!");
+						}
+						
+					}
+				},
+				created: function() {
+					//this.jsondata = JSON.stringify(this.jjj)
+				},
+			}
+
+		)
+	</script>
+	
+</html>
